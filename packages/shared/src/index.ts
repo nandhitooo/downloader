@@ -31,6 +31,8 @@ export const ResolveRequestSchema = z.object({
   url: z.string().min(1).max(2048),
   /** Requested maximum video height (`240` … `1080`); omitted means best. */
   quality: VideoQualitySchema.optional(),
+  /** Ask the upstream for the audio track as an MP3 instead of the video. */
+  audioOnly: z.boolean().optional(),
 });
 export type ResolveRequest = z.infer<typeof ResolveRequestSchema>;
 

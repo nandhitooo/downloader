@@ -97,6 +97,7 @@ function typeFromMime(mime: string): MediaType {
 function mapUpstreamResult(
   data: UpstreamResponse,
   platform: Platform,
+  audioOnly: boolean,
 ): MediaResult {
   switch (data.status) {
     case "tunnel":
@@ -105,9 +106,9 @@ function mapUpstreamResult(
         platform,
         items: [
           {
-            type: "video",
+            type: audioOnly ? "audio" : "video",
             url: data.url,
-            ext: extensionFromUrl(data.filename, "mp4"),
+            ext: extensionFromUrl(data.filename, audioOnly ? "mp3" : "mp4"),
             filename: data.filename,
           },
         ],
@@ -174,6 +175,7 @@ export async function resolveWithUpstream(
   env: Env,
   platform: Platform,
   quality?: VideoQuality,
+  audioOnly?: boolean,
 ): Promise<MediaResult> {
   const base = env.UPSTREAM_URL?.trim();
   if (!base) {
@@ -205,7 +207,8 @@ export async function resolveWithUpstream(
       body: JSON.stringify({
         url: url.toString(),
         videoQuality: quality ?? "1080",
-        downloadMode: "auto",
+        downloadMode: audioOnly ? "audio" : "auto",
+        ...(audioOnly ? { audioFormat: "mp3", audioBitrate: "128" } : {}),
         filenameStyle: "basic",
         alwaysProxy: true,
       }),
@@ -246,5 +249,5 @@ export async function resolveWithUpstream(
     );
   }
 
-  return mapUpstreamResult(parsed.data, platform);
+  return mapUpstreamResult(parsed.data, platform, audioOnly === true);
 }

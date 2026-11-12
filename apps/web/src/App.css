@@ -234,6 +234,18 @@
   color: var(--accent);
 }
 
+.audio {
+  margin-top: 12px;
+}
+
+.audio__button {
+  width: 100%;
+}
+
+.audio__error {
+  margin: 8px 0 0;
+}
+
 @media (min-width: 640px) {
   .app {
     padding: 56px 24px 64px;

@@ -35,12 +35,13 @@ export async function resolveMedia(
   platform: Platform,
   env: Env,
   quality?: VideoQuality,
+  audioOnly?: boolean,
 ): Promise<MediaResult> {
   const adapter = adapterFor(platform);
 
   if (adapter?.match(url)) {
     try {
-      const native = await adapter.resolve(url, env, quality);
+      const native = await adapter.resolve(url, env, quality, audioOnly);
       if (native.items.length > 0) return native;
     } catch (error) {
       const code = error instanceof MediaError ? error.code : "UNKNOWN";
@@ -48,5 +49,5 @@ export async function resolveMedia(
     }
   }
 
-  return resolveWithUpstream(url, env, platform, quality);
+  return resolveWithUpstream(url, env, platform, quality, audioOnly);
 }

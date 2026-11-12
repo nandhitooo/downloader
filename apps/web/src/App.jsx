@@ -97,7 +97,7 @@ function TokenGate({ notice, onSubmit }) {
   )
 }
 
-function ResultCard({ result }) {
+function ResultCard({ result, audio, onDownloadAudio }) {
   const duration = formatDuration(result.duration)
   const preview =
     result.items.find((item) => item.type === 'video') ??
@@ -185,6 +185,48 @@ function ResultCard({ result }) {
             )
           })}
         </ul>
+
+        {result.platform === 'x' ? null : (
+          <div className="audio">
+            {audio.status === 'ready' ? (
+              <a
+                className="downloads__button"
+                href={audio.item.downloadUrl}
+                download
+                aria-label="Unduh audio MP3"
+              >
+                <span className="downloads__type">Audio</span>
+                <span className="downloads__details">
+                  {audio.item.ext
+                    ? audio.item.ext.toUpperCase()
+                    : 'MP3'}{' '}
+                  · siap diunduh
+                </span>
+                <span className="downloads__icon" aria-hidden="true">
+                  ↓
+                </span>
+              </a>
+            ) : (
+              <button
+                className="button button--secondary audio__button"
+                type="button"
+                onClick={onDownloadAudio}
+                disabled={audio.status === 'loading'}
+                aria-busy={audio.status === 'loading'}
+              >
+                {audio.status === 'loading'
+                  ? 'Menyiapkan audio…'
+                  : 'Unduh audio (MP3)'}
+              </button>
+            )}
+
+            {audio.status === 'error' ? (
+              <p className="alert audio__error" role="alert">
+                {audio.message}
+              </p>
+            ) : null}
+          </div>
+        )}
       </div>
     </article>
   )
@@ -195,6 +237,7 @@ function MainScreen({ token, onUnauthorized }) {
   const [quality, setQuality] = useState(DEFAULT_QUALITY)
   const [status, setStatus] = useState('idle')
   const [result, setResult] = useState(null)
+  const [audio, setAudio] = useState({ status: 'idle' })
   const [error, setError] = useState(null)
   const [pasteMessage, setPasteMessage] = useState(null)
 
@@ -216,6 +259,7 @@ function MainScreen({ token, onUnauthorized }) {
     setStatus('loading')
     setError(null)
     setPasteMessage(null)
+    setAudio({ status: 'idle' })
 
     try {
       const data = await resolveUrl(targetUrl, token, selectedQuality)
@@ -233,6 +277,30 @@ function MainScreen({ token, onUnauthorized }) {
           : 'Terjadi kesalahan tak terduga. Coba lagi.',
       )
       setStatus('error')
+    }
+  }
+
+  async function handleDownloadAudio() {
+    if (!result || !url.trim()) return
+
+    setAudio({ status: 'loading' })
+    try {
+      const data = await resolveUrl(url.trim(), token, quality, true)
+      const item =
+        data.items.find((entry) => entry.type === 'audio') ?? data.items[0]
+      setAudio({ status: 'ready', item })
+    } catch (caught) {
+      if (caught instanceof ApiError && caught.code === 'UNAUTHORIZED') {
+        onUnauthorized()
+        return
+      }
+      setAudio({
+        status: 'error',
+        message:
+          caught instanceof ApiError
+            ? caught.message
+            : 'Gagal menyiapkan audio. Coba lagi.',
+      })
     }
   }
 
@@ -335,7 +403,13 @@ function MainScreen({ token, onUnauthorized }) {
         </p>
       ) : null}
 
-      {result ? <ResultCard result={result} /> : null}
+      {result ? (
+        <ResultCard
+          result={result}
+          audio={audio}
+          onDownloadAudio={handleDownloadAudio}
+        />
+      ) : null}
 
       {status === 'idle' ? (
         <p className="hint hint--empty">

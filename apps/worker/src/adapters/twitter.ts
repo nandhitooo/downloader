@@ -153,6 +153,7 @@ export const twitterAdapter: Adapter = {
     url: URL,
     env: Env,
     quality?: VideoQuality,
+    audioOnly?: boolean,
   ): Promise<MediaResult> {
     const tweetId = TWEET_ID.exec(url.pathname)?.[1];
     if (!tweetId) {
@@ -160,6 +161,11 @@ export const twitterAdapter: Adapter = {
         "UNSUPPORTED",
         "Tautan ini bukan tautan post X/Twitter.",
       );
+    }
+
+    // Extracting an audio track needs transcoding, so X relies on the upstream.
+    if (audioOnly) {
+      return resolveWithUpstream(url, env, "x", quality, true);
     }
 
     const tweet = await fetchTweet(tweetId);

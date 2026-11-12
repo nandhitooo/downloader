@@ -27,5 +27,10 @@ export interface Adapter {
   match(url: URL): boolean;
   /** CDN hosts this adapter's media URLs may point at (download proxy allowlist). */
   cdnHosts: string[];
-  resolve(url: URL, env: Env, quality?: VideoQuality): Promise<MediaResult>;
+  resolve(
+    url: URL,
+    env: Env,
+    quality?: VideoQuality,
+    audioOnly?: boolean,
+  ): Promise<MediaResult>;
 }

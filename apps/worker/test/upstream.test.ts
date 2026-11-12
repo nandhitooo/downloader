@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { facebookAdapter } from "../src/adapters/facebook";
 import { resolveWithUpstream } from "../src/adapters/upstream";
 import type { Env } from "../src/env";
 
 const env = { UPSTREAM_URL: "http://localhost:9000" } as Env;
 
-function stubCobalt() {
+function stubCobalt(filename = "clip.mp4") {
   const bodies: Array<Record<string, unknown>> = [];
 
   vi.stubGlobal(
@@ -15,7 +16,7 @@ function stubCobalt() {
         JSON.stringify({
           status: "tunnel",
           url: "http://localhost:9000/tunnel?id=abc",
-          filename: "clip.mp4",
+          filename,
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       );
@@ -55,5 +56,50 @@ describe("resolveWithUpstream video quality", () => {
     );
 
     expect(bodies[0]?.videoQuality).toBe("1080");
+  });
+});
+
+describe("resolveWithUpstream audio-only", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("asks cobalt for an mp3 and maps the result as audio", async () => {
+    const bodies = stubCobalt("clip_audio.mp3");
+
+    const result = await resolveWithUpstream(
+      new URL("https://www.facebook.com/watch/?v=1"),
+      env,
+      "facebook",
+      "1080",
+      true,
+    );
+
+    expect(bodies[0]).toMatchObject({
+      downloadMode: "audio",
+      audioFormat: "mp3",
+      audioBitrate: "128",
+    });
+    expect(result.items[0]).toMatchObject({
+      type: "audio",
+      ext: "mp3",
+      filename: "clip_audio.mp3",
+    });
+  });
+
+  it("forwards audio mode through delegating adapters", async () => {
+    const bodies = stubCobalt();
+
+    await facebookAdapter.resolve(
+      new URL("https://www.facebook.com/watch/?v=1"),
+      env,
+      "480",
+      true,
+    );
+
+    expect(bodies[0]).toMatchObject({
+      videoQuality: "480",
+      downloadMode: "audio",
+    });
   });
 });
