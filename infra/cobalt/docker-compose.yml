@@ -1,0 +1,12 @@
+# Local cobalt instance used as the Worker's upstream fallback.
+# Start/stop via the root scripts: npm run cobalt:up | cobalt:down | cobalt:logs
+services:
+  cobalt:
+    image: ghcr.io/imputnet/cobalt:11
+    container_name: cobalt-local
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      # Must match the URL clients reach this instance on, or tunneling breaks.
+      API_URL: "http://localhost:9000/"

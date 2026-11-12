@@ -1,0 +1,27 @@
+{
+  "name": "downloader-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @app/web & npm run dev -w @app/worker",
+    "dev:web": "npm run dev -w @app/web",
+    "dev:worker": "npm run dev -w @app/worker",
+    "build": "npm run build -w @app/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "deploy": "npm run deploy -w @app/worker",
+    "cobalt:up": "docker compose -f infra/cobalt/docker-compose.yml up -d",
+    "cobalt:down": "docker compose -f infra/cobalt/docker-compose.yml down",
+    "cobalt:logs": "docker compose -f infra/cobalt/docker-compose.yml logs -f"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261112.1",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

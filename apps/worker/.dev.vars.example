@@ -1,0 +1,11 @@
+# Copy to apps/worker/.dev.vars for local development (gitignored).
+# In production set these with `wrangler secret put <NAME>`.
+ACCESS_TOKEN=replace-with-a-long-random-token
+SIGNING_SECRET=replace-with-a-long-random-signing-secret
+
+# Optional: base URL of a self-hosted cobalt-compatible instance.
+# Local Docker cobalt: http://localhost:9000 (npm run cobalt:up).
+# Production tunnel: e.g. https://cobalt.example.com (no trailing slash needed).
+UPSTREAM_URL=
+# Optional: API key configured on that upstream instance.
+UPSTREAM_API_KEY=
