@@ -1,4 +1,4 @@
-import type { MediaType, Platform } from "@app/shared";
+import type { MediaType, Platform, VideoQuality } from "@app/shared";
 import type { Env } from "../env";
 
 /** A single downloadable media stream before it is signed. */
@@ -27,5 +27,5 @@ export interface Adapter {
   match(url: URL): boolean;
   /** CDN hosts this adapter's media URLs may point at (download proxy allowlist). */
   cdnHosts: string[];
-  resolve(url: URL, env: Env): Promise<MediaResult>;
+  resolve(url: URL, env: Env, quality?: VideoQuality): Promise<MediaResult>;
 }

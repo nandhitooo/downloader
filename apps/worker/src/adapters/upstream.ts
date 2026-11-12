@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { MediaType, Platform } from "@app/shared";
+import type { MediaType, Platform, VideoQuality } from "@app/shared";
 import type { Env } from "../env";
 import { MediaError } from "../errors";
 import { extensionFromUrl } from "../filename";
@@ -173,6 +173,7 @@ export async function resolveWithUpstream(
   url: URL,
   env: Env,
   platform: Platform,
+  quality?: VideoQuality,
 ): Promise<MediaResult> {
   const base = env.UPSTREAM_URL?.trim();
   if (!base) {
@@ -203,7 +204,7 @@ export async function resolveWithUpstream(
       headers,
       body: JSON.stringify({
         url: url.toString(),
-        videoQuality: "1080",
+        videoQuality: quality ?? "1080",
         downloadMode: "auto",
         filenameStyle: "basic",
         alwaysProxy: true,

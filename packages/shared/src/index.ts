@@ -22,8 +22,15 @@ export const MediaItemSchema = z.object({
 });
 export type MediaItem = z.infer<typeof MediaItemSchema>;
 
+/** Video qualities offered to the user, ordered lowest to highest (HD). */
+export const VIDEO_QUALITIES = ["240", "360", "480", "720", "1080"] as const;
+export const VideoQualitySchema = z.enum(VIDEO_QUALITIES);
+export type VideoQuality = z.infer<typeof VideoQualitySchema>;
+
 export const ResolveRequestSchema = z.object({
   url: z.string().min(1).max(2048),
+  /** Requested maximum video height (`240` … `1080`); omitted means best. */
+  quality: VideoQualitySchema.optional(),
 });
 export type ResolveRequest = z.infer<typeof ResolveRequestSchema>;
 

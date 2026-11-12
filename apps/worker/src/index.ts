@@ -73,10 +73,13 @@ app.post("/api/resolve", requireAccessToken, async (c) => {
   await enforceResolveRateLimit(c.env.CACHE, ip);
 
   const { url, platform } = detectPlatform(parsed.data.url);
-  const cacheKey = `resolve:${platform}:${url.href}`;
+  const { quality } = parsed.data;
+  // Quality is part of the key: the same post resolves to different files.
+  const cacheKey = `resolve:${platform}:${quality ?? "default"}:${url.href}`;
 
   const cached = await readCachedResult(c.env.CACHE, cacheKey);
-  const result = cached ?? (await resolveMedia(url, platform, c.env));
+  const result =
+    cached ?? (await resolveMedia(url, platform, c.env, quality));
 
   if (!cached) {
     await writeCachedResult(c.env.CACHE, cacheKey, result);

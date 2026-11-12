@@ -37,9 +37,16 @@ export function ensureExtension(filename: string, extension: string): string {
   return `${safe}.${ext}`;
 }
 
-/** RFC 6266 attachment header with an ASCII fallback plus UTF-8 filename*. */
-export function contentDisposition(filename: string): string {
+/**
+ * RFC 6266 header with an ASCII fallback plus UTF-8 filename*. Downloads are
+ * `attachment`; the in-page preview asks for `inline` so media elements can
+ * play/display the response without triggering a save.
+ */
+export function contentDisposition(
+  filename: string,
+  disposition: "attachment" | "inline" = "attachment",
+): string {
   const safe = sanitizeFilename(filename);
   const ascii = safe.replace(/[^\x20-\x7e]/g, "_").replace(/"/g, "'");
-  return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(safe)}`;
+  return `${disposition}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(safe)}`;
 }

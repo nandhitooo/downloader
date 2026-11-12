@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { VIDEO_QUALITIES } from '@app/shared'
 import {
   ApiError,
   clearStoredToken,
@@ -21,6 +22,16 @@ const TYPE_LABELS = {
   audio: 'Audio',
   image: 'Gambar',
 }
+
+const QUALITY_LABELS = {
+  240: '240p',
+  360: '360p',
+  480: '480p',
+  720: '720p (HD)',
+  1080: '1080p (Full HD)',
+}
+
+const DEFAULT_QUALITY = '1080'
 
 function formatDuration(seconds) {
   if (typeof seconds !== 'number' || !Number.isFinite(seconds)) return null
@@ -88,10 +99,40 @@ function TokenGate({ notice, onSubmit }) {
 
 function ResultCard({ result }) {
   const duration = formatDuration(result.duration)
+  const preview =
+    result.items.find((item) => item.type === 'video') ??
+    result.items.find((item) => item.type === 'image')
+  const previewUrl = preview
+    ? `${preview.downloadUrl}&inline=1`
+    : null
 
   return (
     <article className="card" aria-label="Hasil pengambilan media">
-      {result.thumbnail ? (
+      {preview && previewUrl ? (
+        <div className="card__preview">
+          {preview.type === 'video' ? (
+            <video
+              key={previewUrl}
+              className="card__preview-media"
+              src={previewUrl}
+              poster={result.thumbnail}
+              controls
+              playsInline
+              preload="metadata"
+            >
+              Browser ini tidak bisa memutar video. Unduh lewat tombol di bawah.
+            </video>
+          ) : (
+            <img
+              key={previewUrl}
+              className="card__preview-media"
+              src={previewUrl}
+              alt={result.title ? `Pratinjau: ${result.title}` : 'Pratinjau media'}
+              loading="lazy"
+            />
+          )}
+        </div>
+      ) : result.thumbnail ? (
         <img
           className="card__thumb"
           src={result.thumbnail}
@@ -151,6 +192,7 @@ function ResultCard({ result }) {
 
 function MainScreen({ token, onUnauthorized }) {
   const [url, setUrl] = useState('')
+  const [quality, setQuality] = useState(DEFAULT_QUALITY)
   const [status, setStatus] = useState('idle')
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
@@ -167,12 +209,16 @@ function MainScreen({ token, onUnauthorized }) {
       return
     }
 
+    await load(trimmed, quality)
+  }
+
+  async function load(targetUrl, selectedQuality) {
     setStatus('loading')
     setError(null)
     setPasteMessage(null)
 
     try {
-      const data = await resolveUrl(trimmed, token)
+      const data = await resolveUrl(targetUrl, token, selectedQuality)
       setResult(data)
       setStatus('done')
     } catch (caught) {
@@ -188,6 +234,13 @@ function MainScreen({ token, onUnauthorized }) {
       )
       setStatus('error')
     }
+  }
+
+  function handleQualityChange(event) {
+    const next = event.target.value
+    setQuality(next)
+    // Re-resolve the current post so the preview and download match the choice.
+    if (result && url.trim()) void load(url.trim(), next)
   }
 
   async function handlePaste() {
@@ -229,6 +282,23 @@ function MainScreen({ token, onUnauthorized }) {
             onChange={(event) => setUrl(event.target.value)}
             required
           />
+        </label>
+
+        <label className="field">
+          <span className="field__label">Kualitas video</span>
+          <select
+            className="field__input"
+            name="quality"
+            value={quality}
+            onChange={handleQualityChange}
+            disabled={isLoading}
+          >
+            {VIDEO_QUALITIES.map((value) => (
+              <option key={value} value={value}>
+                {QUALITY_LABELS[value] ?? `${value}p`}
+              </option>
+            ))}
+          </select>
         </label>
 
         <div className="form__actions">

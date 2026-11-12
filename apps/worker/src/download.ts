@@ -95,6 +95,10 @@ export async function downloadRoute(
     Accept: "*/*",
   });
 
+  // `inline=1` serves the same signed file for the in-page <video>/<img>
+  // preview instead of forcing a save.
+  const inline = c.req.query("inline") === "1";
+
   const range = c.req.header("Range");
   if (range) headers.set("Range", range);
 
@@ -121,7 +125,10 @@ export async function downloadRoute(
   const responseHeaders = new Headers({
     "Content-Type":
       upstream.headers.get("content-type") ?? "application/octet-stream",
-    "Content-Disposition": contentDisposition(payload.fn),
+    "Content-Disposition": contentDisposition(
+      payload.fn,
+      inline ? "inline" : "attachment",
+    ),
     "X-Content-Type-Options": "nosniff",
     "Cache-Control": "private, no-store",
   });

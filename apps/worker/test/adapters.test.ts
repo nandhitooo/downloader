@@ -131,6 +131,29 @@ describe("twitter native adapter", () => {
     expect(result.items[1]?.quality).toBe("480x852");
   });
 
+  it("returns only the best variant at or below the requested quality", async () => {
+    stubFetch(videoTweet);
+
+    const result = await twitterAdapter.resolve(
+      new URL("https://x.com/NASAJohnson/status/2120221298534019269"),
+      env,
+      "480",
+    );
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]?.quality).toBe("480x852");
+
+    const lowest = await twitterAdapter.resolve(
+      new URL("https://x.com/NASAJohnson/status/2120221298534019269"),
+      env,
+      "240",
+    );
+
+    // No 240p stream exists, so the smallest available one is used.
+    expect(lowest.items).toHaveLength(1);
+    expect(lowest.items[0]?.quality).toBe("480x852");
+  });
+
   it("maps photo media into image items", async () => {
     stubFetch({
       text: "A photo",

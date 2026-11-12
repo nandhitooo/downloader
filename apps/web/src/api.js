@@ -35,8 +35,10 @@ export function clearStoredToken() {
   }
 }
 
-export async function resolveUrl(url, token) {
-  const parsed = ResolveRequestSchema.safeParse({ url })
+export async function resolveUrl(url, token, quality) {
+  const parsed = ResolveRequestSchema.safeParse(
+    quality ? { url, quality } : { url },
+  )
   if (!parsed.success) {
     throw new ApiError(
       'INVALID_URL',

@@ -1,3 +1,4 @@
+import type { VideoQuality } from "@app/shared";
 import type { Env } from "../env";
 import { PLATFORM_HOSTS, isHostAllowed } from "../detect";
 import { MediaError } from "../errors";
@@ -71,9 +72,33 @@ function qualityLabel(variantUrl: string, bitrate: number | undefined): string |
   return undefined;
 }
 
+/** Short side of a variant resolution (`720x1280` → 720p). */
+function variantHeight(variantUrl: string): number | undefined {
+  const match = /\/(\d{2,4})x(\d{2,4})\//.exec(variantUrl);
+  if (!match?.[1] || !match[2]) return undefined;
+  return Math.min(Number(match[1]), Number(match[2]));
+}
+
+/** Picks the best variant at or below the requested height. */
+function pickVariant(
+  variants: SyndicationVariant[],
+  quality: VideoQuality,
+): SyndicationVariant[] {
+  const target = Number(quality);
+  const within = variants.find((variant) => {
+    const height = variant.url ? variantHeight(variant.url) : undefined;
+    return height !== undefined && height <= target;
+  });
+  if (within) return [within];
+  // Nothing at or below the request: the smallest available stream is closest.
+  const smallest = variants[variants.length - 1];
+  return smallest ? [smallest] : [];
+}
+
 function mediaItemsFromTweet(
   tweet: SyndicationTweet,
   tweetId: string,
+  quality?: VideoQuality,
 ): MediaSource[] {
   const items: MediaSource[] = [];
   const base = `${tweet.user?.screen_name ?? "x"}-${tweetId}`;
@@ -89,7 +114,9 @@ function mediaItemsFromTweet(
       .sort((a, b) => (b.bitrate ?? 0) - (a.bitrate ?? 0));
 
     if (mp4Variants.length > 0) {
-      for (const [variantIndex, variant] of mp4Variants.entries()) {
+      const selected = quality ? pickVariant(mp4Variants, quality) : mp4Variants;
+
+      for (const [variantIndex, variant] of selected.entries()) {
         const variantUrl = variant.url;
         if (!variantUrl) continue;
         items.push({
@@ -97,7 +124,9 @@ function mediaItemsFromTweet(
           url: variantUrl,
           ext: "mp4",
           quality: qualityLabel(variantUrl, variant.bitrate),
-          filename: `${base}-${position}-${variantIndex + 1}.mp4`,
+          filename: quality
+            ? `${base}-${position}.mp4`
+            : `${base}-${position}-${variantIndex + 1}.mp4`,
         });
       }
       continue;
@@ -120,7 +149,11 @@ export const twitterAdapter: Adapter = {
   name: "x",
   match: (url) => isHostAllowed(url.hostname, PLATFORM_HOSTS.x),
   cdnHosts: ["video.twimg.com", "pbs.twimg.com"],
-  async resolve(url: URL, env: Env): Promise<MediaResult> {
+  async resolve(
+    url: URL,
+    env: Env,
+    quality?: VideoQuality,
+  ): Promise<MediaResult> {
     const tweetId = TWEET_ID.exec(url.pathname)?.[1];
     if (!tweetId) {
       throw new MediaError(
@@ -137,10 +170,10 @@ export const twitterAdapter: Adapter = {
       );
     }
 
-    const items = mediaItemsFromTweet(tweet, tweetId);
+    const items = mediaItemsFromTweet(tweet, tweetId, quality);
     if (items.length === 0) {
       // Delegating through the registry keeps the fallback able to try.
-      return resolveWithUpstream(url, env, "x");
+      return resolveWithUpstream(url, env, "x", quality);
     }
 
     const author =

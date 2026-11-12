@@ -72,4 +72,9 @@ describe("contentDisposition", () => {
     const header = contentDisposition("musik.mp3");
     expect(header).toContain('filename="musik.mp3"');
   });
+
+  it("serves previews inline instead of as an attachment", () => {
+    const header = contentDisposition("video.mp4", "inline");
+    expect(header.startsWith('inline; filename="video.mp4"')).toBe(true);
+  });
 });

@@ -1,4 +1,4 @@
-import type { Platform } from "@app/shared";
+import type { Platform, VideoQuality } from "@app/shared";
 import type { Env } from "../env";
 import { MediaError } from "../errors";
 import { facebookAdapter } from "./facebook";
@@ -34,12 +34,13 @@ export async function resolveMedia(
   url: URL,
   platform: Platform,
   env: Env,
+  quality?: VideoQuality,
 ): Promise<MediaResult> {
   const adapter = adapterFor(platform);
 
   if (adapter?.match(url)) {
     try {
-      const native = await adapter.resolve(url, env);
+      const native = await adapter.resolve(url, env, quality);
       if (native.items.length > 0) return native;
     } catch (error) {
       const code = error instanceof MediaError ? error.code : "UNKNOWN";
@@ -47,5 +48,5 @@ export async function resolveMedia(
     }
   }
 
-  return resolveWithUpstream(url, env, platform);
+  return resolveWithUpstream(url, env, platform, quality);
 }
