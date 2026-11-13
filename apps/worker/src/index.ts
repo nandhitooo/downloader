@@ -12,10 +12,13 @@ import { detectPlatform } from "./detect";
 import { downloadRoute } from "./download";
 import type { Env } from "./env";
 import { MediaError, statusFor, toErrorResponse } from "./errors";
-import { ensureExtension, extensionFromUrl, sanitizeFilename } from "./filename";
+import {
+  ensureExtension,
+  extensionFromUrl,
+  sanitizeFilename,
+} from "./filename";
 import { DOWNLOAD_TOKEN_TTL_SECONDS, signToken } from "./sign";
 
-const RESOLVE_CACHE_TTL_SECONDS = 10 * 60;
 const RATE_LIMIT_MAX = 30;
 const RATE_LIMIT_WINDOW_SECONDS = 10 * 60;
 
@@ -74,18 +77,9 @@ app.post("/api/resolve", requireAccessToken, async (c) => {
 
   const { url, platform } = detectPlatform(parsed.data.url);
   const { quality, audioOnly } = parsed.data;
-  // Quality and mode are part of the key: the same post resolves to different files.
-  const cacheKey = `resolve:${platform}:${quality ?? "default"}:${
-    audioOnly ? "audio" : "video"
-  }:${url.href}`;
-
-  const cached = await readCachedResult(c.env.CACHE, cacheKey);
-  const result =
-    cached ?? (await resolveMedia(url, platform, c.env, quality, audioOnly));
-
-  if (!cached) {
-    await writeCachedResult(c.env.CACHE, cacheKey, result);
-  }
+  // Deliberately not cached: the upstream's tunnel links are short-lived, so a
+  // cached result would hand out links that have already expired.
+  const result = await resolveMedia(url, platform, c.env, quality, audioOnly);
 
   return c.json(await buildResolveResponse(result, c.env));
 });
@@ -108,40 +102,6 @@ async function enforceResolveRateLimit(
   });
 }
 
-async function readCachedResult(
-  kv: KVNamespace,
-  key: string,
-): Promise<MediaResult | null> {
-  try {
-    const cached = (await kv.get(key, "json")) as MediaResult | null;
-    if (
-      cached &&
-      typeof cached === "object" &&
-      Array.isArray(cached.items) &&
-      cached.items.length > 0
-    ) {
-      return cached;
-    }
-  } catch {
-    // A broken cache entry must not break the request.
-  }
-  return null;
-}
-
-async function writeCachedResult(
-  kv: KVNamespace,
-  key: string,
-  result: MediaResult,
-): Promise<void> {
-  try {
-    await kv.put(key, JSON.stringify(result), {
-      expirationTtl: RESOLVE_CACHE_TTL_SECONDS,
-    });
-  } catch {
-    // Caching is best-effort.
-  }
-}
-
 async function buildResolveResponse(
   result: MediaResult,
   env: Env,
@@ -158,7 +118,9 @@ async function buildResolveResponse(
 
   const items: MediaItem[] = [];
   for (const [index, item] of result.items.entries()) {
-    items.push(await buildMediaItem(result.platform, item, index, expiresAt, secret));
+    items.push(
+      await buildMediaItem(result.platform, item, index, expiresAt, secret),
+    );
   }
 
   const response = ResolveResponseSchema.safeParse({
@@ -193,7 +155,10 @@ async function buildMediaItem(
     ext,
   );
 
-  const token = await signToken({ u: item.url, fn: filename, exp: expiresAt }, secret);
+  const token = await signToken(
+    { u: item.url, fn: filename, exp: expiresAt },
+    secret,
+  );
 
   const mediaItem: MediaItem = {
     type: item.type,

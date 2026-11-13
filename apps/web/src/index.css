@@ -1,23 +1,25 @@
 :root {
-  --bg: #f5f4f7;
+  /* Graphite-blue base, cobalt as the only action color. */
+  --bg: #f3f5fa;
   --surface: #ffffff;
-  --text: #221c2b;
-  --muted: #6b6375;
-  --border: #e2e0e6;
-  --accent: #7c3aed;
-  --accent-strong: #6d28d9;
-  --accent-contrast: #ffffff;
-  --danger: #b91c1c;
-  --danger-bg: #fef2f2;
-  --danger-border: #f3c7c7;
-  --radius: 12px;
-  --shadow: 0 16px 40px -28px rgba(24, 16, 40, 0.45);
+  --raised: #e9edf6;
+  --line: #d3dae9;
+  --text: #141b2b;
+  --muted: #5a6783;
+  --accent: #3857e8;
+  --accent-strong: #2a45c2;
+  --on-accent: #ffffff;
+  --danger: #b42318;
+  --danger-bg: #fdecea;
+  --danger-line: #f3bdb8;
+  --focus: rgba(56, 87, 232, 0.35);
 
-  font-family:
-    system-ui,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+  --r-field: 16px;
+  --r-media: 20px;
+  --r-control: 12px;
+  --r-inner: 9px;
+
+  font-family: "Instrument Sans", system-ui, "Segoe UI", Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.5;
   color-scheme: light dark;
@@ -29,18 +31,19 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121116;
-    --surface: #1b1a21;
-    --text: #f3f4f6;
-    --muted: #a1a1aa;
-    --border: #2e2d37;
-    --accent: #a78bfa;
-    --accent-strong: #8b5cf6;
-    --accent-contrast: #16151b;
-    --danger: #fca5a5;
-    --danger-bg: #2a1618;
-    --danger-border: #4c2427;
-    --shadow: 0 16px 40px -28px rgba(0, 0, 0, 0.8);
+    --bg: #0f141d;
+    --surface: #161d2a;
+    --raised: #1e2839;
+    --line: #2b3652;
+    --text: #e9edf5;
+    --muted: #93a0b8;
+    --accent: #7f9bff;
+    --accent-strong: #9bb1ff;
+    --on-accent: #0b1020;
+    --danger: #ff9b92;
+    --danger-bg: #2a1719;
+    --danger-line: #55282c;
+    --focus: rgba(127, 155, 255, 0.4);
   }
 }
 
@@ -62,8 +65,9 @@ body {
 }
 
 h1,
-h2 {
-  font-weight: 650;
+h2,
+p {
+  margin: 0;
 }
 
 button,
@@ -72,7 +76,33 @@ a {
   font: inherit;
 }
 
+button {
+  color: inherit;
+}
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

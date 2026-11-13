@@ -44,8 +44,11 @@ export async function resolveMedia(
       const native = await adapter.resolve(url, env, quality, audioOnly);
       if (native.items.length > 0) return native;
     } catch (error) {
-      const code = error instanceof MediaError ? error.code : "UNKNOWN";
-      console.warn(`adapter ${platform} failed (${code}), falling back`);
+      const detail =
+        error instanceof MediaError
+          ? `${error.code}: ${error.message}`
+          : "UNKNOWN";
+      console.warn(`adapter ${platform} failed (${detail}), falling back`);
     }
   }
 

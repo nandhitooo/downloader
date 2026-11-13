@@ -1,21 +1,23 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "downloader-worker",
-  "main": "src/index.ts",
-  "compatibility_date": "2026-10-01",
-  "observability": {
-    "enabled": true
-  },
-  "assets": {
-    "directory": "../web/dist",
-    "binding": "ASSETS",
-    "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
-  },
-  "kv_namespaces": [
-    {
-      "binding": "CACHE",
-      "id": "00000000000000000000000000000000"
-    }
-  ]
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "downloader-worker",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-10-01",
+	"observability": {
+		"enabled": true
+	},
+	"assets": {
+		"directory": "../web/dist",
+		"binding": "ASSETS",
+		"not_found_handling": "single-page-application",
+		"run_worker_first": [
+			"/api/*"
+		]
+	},
+	"kv_namespaces": [
+		{
+			"binding": "CACHE",
+			"id": "46b5a9609cc04a6b8c7f0b2db98cc09a"
+		}
+	]
 }

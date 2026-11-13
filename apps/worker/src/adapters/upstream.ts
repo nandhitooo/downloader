@@ -120,11 +120,7 @@ function mapUpstreamResult(
         url: entry.url,
         ext: extensionFromUrl(
           entry.url,
-          entry.type === "photo"
-            ? "jpg"
-            : entry.type === "gif"
-              ? "gif"
-              : "mp4",
+          entry.type === "photo" ? "jpg" : entry.type === "gif" ? "gif" : "mp4",
         ),
       }));
 
@@ -221,6 +217,10 @@ export async function resolveWithUpstream(
     );
   }
 
+  if (!response.ok) {
+    console.warn(`upstream HTTP ${response.status} from ${endpoint.origin}`);
+  }
+
   if (response.status === 429) {
     throw new MediaError(
       "RATE_LIMITED",
@@ -243,10 +243,17 @@ export async function resolveWithUpstream(
 
   const parsed = UpstreamResponseSchema.safeParse(json);
   if (!parsed.success) {
+    console.warn(
+      `upstream unknown response: ${JSON.stringify(json).slice(0, 300)}`,
+    );
     throw new MediaError(
       "UPSTREAM_FAILED",
       "Format respons upstream tidak dikenali.",
     );
+  }
+
+  if (parsed.data.status === "error") {
+    console.warn(`upstream error code: ${parsed.data.error.code}`);
   }
 
   return mapUpstreamResult(parsed.data, platform, audioOnly === true);
